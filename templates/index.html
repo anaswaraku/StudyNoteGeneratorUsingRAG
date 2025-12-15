@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Study Assistant</title>
+    <style>
+        body { font-family: sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; line-height: 1.6; }
+        h1, h2 { color: #333; }
+        .section { margin-bottom: 30px; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background: #f9f9f9; }
+        button { padding: 10px 20px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        button:hover { background-color: #0056b3; }
+        #ingest-status { margin-left: 10px; font-weight: bold; }
+        textarea { width: 100%; height: 100px; padding: 10px; margin-bottom: 10px; border-radius: 4px; border: 1px solid #ccc; box-sizing: border-box; }
+        #answer-container { margin-top: 20px; padding-top: 20px; border-top: 1px solid #ccc; display: none; }
+        .source-box { background: #e9ecef; padding: 10px; margin-top: 10px; border-radius: 4px; font-size: 0.9em; }
+        .error { color: red; }
+        .loading { color: #666; font-style: italic; }
+    </style>
+</head>
+<body>
+
+    <h1>AI Study Assistant</h1>
+
+    <!-- Ingest Section -->
+    <div class="section">
+        <h2>1. Ingest Documents</h2>
+        <p>Click below to scan the <code>Study/</code> folder and update the knowledge base.</p>
+        <button onclick="ingestDocuments()">Ingest Documents</button>
+        <span id="ingest-status"></span>
+    </div>
+
+    <!-- Query Section -->
+    <div class="section">
+        <h2>2. Ask a Question</h2>
+        <textarea id="question" placeholder="Enter your question here (e.g., 'What are the main concepts in module 2?')..."></textarea>
+        <button onclick="askQuestion()">Ask Question</button>
+
+        <div id="answer-container">
+            <h3>Answer:</h3>
+            <div id="answer-text"></div>
+            
+            <h4>Sources:</h4>
+            <div id="sources-list"></div>
+        </div>
+    </div>
+
+    <script>
+        async function ingestDocuments() {
+            const statusSpan = document.getElementById('ingest-status');
+            statusSpan.textContent = "Processing... please wait.";
+            statusSpan.className = "loading";
+
+            try {
+                const response = await fetch('/ingest', { method: 'POST' });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    statusSpan.textContent = `Success! Processed ${data.files_processed} files (${data.chunks_created} chunks).`;
+                    statusSpan.className = "";
+                } else {
+                    statusSpan.textContent = "Error: " + (data.error || data.message || "Unknown error");
+                    statusSpan.className = "error";
+                }
+            } catch (error) {
+                statusSpan.textContent = "Network error: " + error.message;
+                statusSpan.className = "error";
+            }
+        }
+
+        async function askQuestion() {
+            const question = document.getElementById('question').value;
+            const answerContainer = document.getElementById('answer-container');
+            const answerText = document.getElementById('answer-text');
+            const sourcesList = document.getElementById('sources-list');
+
+            if (!question.trim()) return;
+
+            answerContainer.style.display = "block";
+            answerText.innerHTML = "<span class='loading'>Thinking...</span>";
+            sourcesList.innerHTML = "";
+
+            try {
+                const response = await fetch('/query', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ question: question })
+                });
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Format answer with simple newlines to breaks
+                    answerText.innerHTML = data.generated_answer.replace(/\n/g, "<br>");
+                    
+                    // Show sources
+                    if (data.source_documents && data.source_documents.length > 0) {
+                        sourcesList.innerHTML = "<strong>Documents:</strong> " + data.source_documents.join(", ");
+                        
+                        // Optionally show snippets
+                        const snippetsHtml = data.retrieved_text_snippets.map((snippet, idx) => 
+                            `<div class='source-box'><strong>Snippet ${idx+1}:</strong><br>${snippet.substring(0, 300)}...</div>`
+                        ).join("");
+                        sourcesList.innerHTML += "<br><br><strong>Context:</strong>" + snippetsHtml;
+                    } else {
+                        sourcesList.textContent = "No specific source documents cited.";
+                    }
+                } else {
+                    answerText.innerHTML = `<span class="error">Error: ${data.error || "Unknown error"}</span>`;
+                }
+            } catch (error) {
+                answerText.innerHTML = `<span class="error">Network error: ${error.message}</span>`;
+            }
+        }
+    </script>
+</body>
+</html>
