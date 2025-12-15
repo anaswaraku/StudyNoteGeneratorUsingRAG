@@ -1,11 +1,18 @@
-﻿# StudyNoteGeneratorUsingRAG
-Easy-to-run Streamlit app that demonstrates a practical RAG pipeline for study/education use-cases.
-Converts uploaded PDFs (or pasted text) into concise study materials using a Retrieval-Augmented Generation (RAG) pipeline: 
-PDF → chunk → embeddings → retrieval → LLM (Groq Llama-3). Produces: precise bullet notes, 1-line summary, keywords, mermaid mind-map and exam answer guidance based on syllabus weightage.
+# AI Study Assistant
 
-Tech Stack:
-- Python, Streamlit
-- Groq Llama-3 (RAG reasoning, notes generation)
-- sentence-transformers + scikit-learn (embeddings + retrieval)
-- pdfplumber (PDF text extraction)
-- NumPy, pandas (processing)
+A local, AI-powered study assistant that uses Retrieval-Augmented Generation (RAG) to answer questions based on personal study materials. Built with Flask, LangChain, ChromaDB, and Groq (Llama 3).
+
+## Features
+
+-  RAG Architecture: Retrieves relevant information from documents.
+-  Local Vector Store: Uses ChromaDB to store document embeddings.
+-  LLM: Llama 3 (via Groq API).
+-  Multi-Format Support: Ingests PDF, DOCX, and TXT files.
+  
+## Tech Stack
+
+-  Python, Flask
+-  Llama 3.1 8B (via Groq API)
+-  LangChain
+-  Chroma (Local)
+-  Embeddings- `sentence-transformers/all-MiniLM-L6-v2` (Local)
