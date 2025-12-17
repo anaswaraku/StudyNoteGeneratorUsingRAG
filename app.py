@@ -99,9 +99,6 @@ def ingest_documents():
     splits = text_splitter.split_documents(documents)
 
     # 4. Store in Chroma
-    # To ensure we index "all" and don't duplicate if run multiple times, 
-    # we can clear the existing DB first. 
-    # Since the requirement is "indexes all documents", a fresh index is cleanest.
     if os.path.exists(CHROMA_PATH):
         try:
             shutil.rmtree(CHROMA_PATH)
@@ -111,15 +108,13 @@ def ingest_documents():
             # But duplicate content is bad for RAG. 
             # We'll try to proceed. 
 
-    # Re-initialize vectorstore to create the dir
+    # Re-initialize vectorstore
     vectorstore = Chroma.from_documents(
         documents=splits,
         embedding=embeddings,
         persist_directory=CHROMA_PATH
     )
-    # Chroma 0.4+ persists automatically or we might need vectorstore.persist() depending on version.
-    # New versions persist automatically.
-
+   
     return jsonify({
         "message": "Ingestion complete",
         "files_processed": len(supported_files),
@@ -191,5 +186,5 @@ def query_documents():
     })
 
 if __name__ == '__main__':
-    # Running strictly on local machine
+    # Running on local machine
     app.run(host='127.0.0.1', port=5000, debug=True)
